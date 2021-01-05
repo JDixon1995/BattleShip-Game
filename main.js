@@ -47,7 +47,7 @@ let model = {
 
     generateShipLocations: function() {
 		let locations;
-		for (let i = 0); i < this.numShips; i++) {
+		for (let i = 0; i < this.numShips; i++) {
 			do {
 				locations = this.generateShip();
 			} while (this.collision(locations));
@@ -92,3 +92,90 @@ let model = {
 		return false;
 	}
 };
+
+const view = {
+    displayMessage: function(msg) {
+        let messageArea = document.getElementById("messageArea");
+        messageArea.innerHTML = msg;
+    },
+
+    displayHit: function(location) {
+        let cell = document.getElementById(location);
+        cell.setAttribute("class", "hit");
+    },
+
+    displayMiss: function(location) {
+        let cell = document.getElementById(location);
+        cell.setAttribute("class", "hit");
+    }
+};
+
+const controller = {
+    guesses: 0,
+
+    processGuess: function(guess) {
+        let location = parseGuess(guess);
+        if (location) {
+            this.guesses++;
+            let hit = model.fire(location);
+            if (hit && model.shipsSunk === model.numShips) {
+                view.displayMessage("You sank all my battleships, in " + this.guesses + " guesses");
+            }
+        }
+    }
+}
+
+function parseGuess(guess) {
+    let alphabet = ["A", "B", "C", "D", "E", "F", "G"];
+
+    if (guess === null || guess.length !== 2) {
+        alert("Please enter a letter and a number on the board");
+    } else {
+        let firstChar = guess.charAt(0);
+        let row = alphabet.indexOf(firstChar);
+        let column = guess.charAt(1);
+
+        if(isNaN(row) || isNaN(column)) {
+            alert("That isn't on the board.");
+        } else if (row < 0 || row >= model.boardSize ||
+                   column < 0 || column >= model.boardSize) {
+                       alert("That's off the board.");
+                   } else {
+                       return row + column;
+                   }
+    }
+    return null;
+}
+
+//Event Handlers
+
+function handleFireButton() {
+    let guessInput = document.getElementById("guessInput");
+    let guess = guessInput.nodeValue.toUpperCase();
+
+    controller.processGuess(guess);
+
+    guessInput.value = "";
+}
+
+function handleKeyPress(e) {
+    let fireButton = document.getElementById("fireButton");
+    e = e || window.event;
+
+    if (e.keyCode === 13) {
+        fireButton.click();
+        return false;
+    }
+}
+
+window.onload = init;
+
+function init() {
+    let fireButton = document.getElementById("fireButton");
+    fireButton.onclick = handleFireButton;
+
+    let guessInput = document.getElementById("guessInput");
+    guessInput.onkeypress = handleKeyPress;
+
+    model.generateShipLocations();
+}
